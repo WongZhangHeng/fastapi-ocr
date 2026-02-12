@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI - Document Extractor</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+
+<body class="flex flex-col bg-[#F9FAFB] h-screen overflow-hidden text-slate-900">
+
+    <!-- Fullscreen Image Modal -->
+    <div id="imageModal" class="fixed inset-0 bg-slate-900/95 z-[100] hidden items-center justify-center p-4 md:p-12 animate-in backdrop-blur-sm">
+        <button id="closeModal" class="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+        <img id="modalImg" src="" alt="Full preview" class="max-w-full max-h-full object-contain rounded-xl shadow-2xl">
+    </div>
+
+    <div id="disclaimerModal" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center p-4 animate-in backdrop-blur-sm">
+        <div class="bg-white w-full max-w-lg rounded-[32px] shadow-2xl overflow-hidden border border-slate-100 transform transition-all">
+            <div class="p-8">
+                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-extrabold text-slate-900 mb-4 tracking-tight">Project Disclaimer</h3>
+                <div class="space-y-4 text-sm text-slate-600 leading-relaxed font-medium">
+                    <p>This Document Extractor tool is created <strong>for learning and project purposes only</strong>. It demonstrates basic file processing and OCR technology. Please note:</p>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li><strong>Not for production:</strong> This webpage is experimental and may contain bugs.</li>
+                        <li><strong>Accuracy:</strong> OCR results may vary and are intended for demonstration only.</li>
+                        <li><strong>Learning focus:</strong> This project is meant to help understand FastAPI, front-end integration, and OCR workflows.</li>
+                    </ul>
+
+                    <p class="mt-4 text-xs font-semibold text-slate-500 uppercase tracking-widest">Project by: Wong Zhang Heng😺</p>
+                </div>
+            </div>
+            <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button id="closeDisclaimer" class="px-6 py-3 bg-slate-900 text-white text-xs font-bold uppercase tracking-widest rounded-2xl hover:bg-slate-800 transition-all active:scale-95">
+                    I Understand
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto w-full overflow-hidden min-h-0">
+        
+        <!-- Header Section -->
+        <header class="mb-8 flex flex-row justify-between items-center shrink-0">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20 rotate-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white -rotate-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight leading-none">FastAPI <span class="text-blue-600">Extractor</span></h1>
+                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-1.5 opacity-70">Simple Document Extraction</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <!-- Disclaimer Button -->
+                <button id="openDisclaimer" class="flex items-center gap-2 px-4 py-2 bg-white rounded-2xl border border-slate-100 shadow-sm text-slate-500 hover:text-blue-600 hover:border-blue-100 transition-all group">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="text-[10px] font-black uppercase tracking-widest">Disclaimer</span>
+                </button>
+
+                <div class="hidden md:flex items-center gap-6">
+                    <div class="px-4 py-2 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
+                        <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                        <div class="text-right">
+                            <p class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-0.5">Using Tool</p>
+                            <p class="text-xs font-extrabold text-slate-700">FastAPI</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
+            
+            <!-- Left Column: Controls -->
+            <div class="lg:col-span-4 flex flex-col min-h-0">
+                <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
+                    
+                    <!-- Fixed Step Header -->
+                    <div class="p-6 border-b border-slate-50 shrink-0 flex justify-between items-center bg-white/50 backdrop-blur-md">
+                        <div>
+                            <h2 class="text-xs font-black text-blue-500 uppercase tracking-[0.2em] mb-1">Step 1</h2>
+                            <p class="text-slate-900 font-extrabold text-lg">Upload Your File</p>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar p-6 space-y-6">
+                        <!-- Drop Zone -->
+                        <div id="dropZone" class="drop-zone flex-1 min-h-[160px] flex flex-col items-center justify-center cursor-pointer group rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/30 hover:bg-blue-50/50 hover:border-blue-300 transition-all m-2">
+                            <div class="w-14 h-14 bg-white text-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </div>
+                            <p class="text-slate-800 font-extrabold text-sm uppercase tracking-wider">Click or Drag to Upload</p>
+                            <p class="text-slate-400 text-xs mt-2 font-semibold">PDF, Images, or Word Documents</p>
+                            <input type="file" id="fileInput" class="hidden" accept="image/*,.docx,.pdf">
+                        </div>
+
+                        <!-- Selected File Status Area -->
+                        <div id="statusArea" class="hidden space-y-6 animate-in">
+                            <div class="flex flex-col bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                                <div class="flex items-center justify-between px-4 py-3 bg-slate-50/50 border-b border-slate-100">
+                                    <div class="flex items-center gap-3 overflow-hidden">
+                                        <div class="p-2 bg-white rounded-xl border border-slate-200 text-blue-500 shadow-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                            </svg>
+                                        </div>
+                                        <div class="overflow-hidden">
+                                            <p id="fileName" class="text-xs font-extrabold text-slate-800 truncate"></p>
+                                            <p id="fileSize" class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5"></p>
+                                        </div>
+                                    </div>
+                                    <button id="removeFileBtn" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div id="filePreviewContainer" class="w-full h-44 bg-slate-50 flex items-center justify-center overflow-hidden relative group/preview cursor-zoom-in">
+                                    <div id="imagePreview" class="w-full h-full bg-contain bg-no-repeat bg-center transition-transform duration-500 group-hover/preview:scale-105 hidden"></div>
+                                    <div id="docIcon" class="hidden text-blue-500 drop-shadow-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preprocessing Parameters Block -->
+                            <div class="space-y-6 pt-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="h-px flex-1 bg-slate-100"></span>
+                                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Preprocessing Filters</h3>
+                                    <span class="h-px flex-1 bg-slate-100"></span>
+                                </div>
+                                
+                                <!-- Toggle Grid -->
+                                <div class="grid grid-cols-2 gap-3">
+                                    <label class="toggle-card relative flex flex-col items-start p-4 rounded-2xl bg-white border border-slate-200 cursor-pointer hover:border-blue-200 transition-all group overflow-hidden">
+                                        <div class="flex justify-between w-full mb-3">
+                                            <div class="p-1.5 rounded-lg bg-slate-50 text-slate-400 group-hover:text-blue-500 transition-colors">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                                </svg>
+                                            </div>
+                                            <input type="checkbox" id="paramGrayscale" class="w-4 h-4 rounded-full border-slate-300 text-blue-600 focus:ring-blue-500 transition-all">
+                                        </div>
+                                        <span class="text-xs font-black text-slate-700 uppercase tracking-tight">Grayscale</span>
+                                    </label>
+                                    
+                                    <label class="toggle-card relative flex flex-col items-start p-4 rounded-2xl bg-white border border-slate-200 cursor-pointer hover:border-blue-200 transition-all group overflow-hidden">
+                                        <div class="flex justify-between w-full mb-3">
+                                            <div class="p-1.5 rounded-lg bg-slate-50 text-slate-400 group-hover:text-blue-500 transition-colors">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" />
+                                                </svg>
+                                            </div>
+                                            <input type="checkbox" id="paramDenoise" class="w-4 h-4 rounded-full border-slate-300 text-blue-600 focus:ring-blue-500 transition-all">
+                                        </div>
+                                        <span class="text-xs font-black text-slate-700 uppercase tracking-tight">Denoise</span>
+                                    </label>
+                                </div>
+
+                                <!-- Precision Sliders -->
+                                <div class="space-y-5 px-1">
+                                    <div class="group">
+                                        <div class="flex justify-between items-end mb-3">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Brightness</span>
+                                                <span class="text-[9px] text-slate-400 font-medium">Lightness Adjustment</span>
+                                            </div>
+                                            <div class="flex items-center gap-1.5">
+                                                <span id="brightnessValDisplay" class="text-xs font-black text-blue-600 tabular-nums">1.0</span>
+                                                <span class="text-[8px] font-bold text-slate-300 uppercase">x</span>
+                                            </div>
+                                        </div>
+                                        <div class="relative flex items-center h-2">
+                                            <input type="range" id="paramBrightness" min="0.5" max="2.0" step="0.1" value="1.0" class="slider-input" oninput="document.getElementById('brightnessValDisplay').innerText = parseFloat(this.value).toFixed(1)">
+                                        </div>
+                                    </div>
+
+                                    <div class="group">
+                                        <div class="flex justify-between items-end mb-3">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Contrast</span>
+                                                <span class="text-[9px] text-slate-400 font-medium">Sharpness Control</span>
+                                            </div>
+                                            <div class="flex items-center gap-1.5">
+                                                <span id="contrastValDisplay" class="text-xs font-black text-blue-600 tabular-nums">1.0</span>
+                                                <span class="text-[8px] font-bold text-slate-300 uppercase">x</span>
+                                            </div>
+                                        </div>
+                                        <div class="relative flex items-center h-2">
+                                            <input type="range" id="paramContrast" min="0.5" max="2.0" step="0.1" value="1.0" class="slider-input" oninput="document.getElementById('contrastValDisplay').innerText = parseFloat(this.value).toFixed(1)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button id="processBtn" class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2">
+                                <span>Extract Text</span>
+                            </button>
+
+                            <!-- Insight Metrics -->
+                            <div id="insightsContainer" class="hidden animate-in space-y-3 pt-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="h-px flex-1 bg-slate-100"></span>
+                                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Document Analysis</h3>
+                                    <span class="h-px flex-1 bg-slate-100"></span>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                        <p class="text-[8px] text-slate-400 font-black uppercase tracking-tighter">Total Pages</p>
+                                        <p id="insightPages" class="text-xs font-bold text-slate-700">-</p>
+                                    </div>
+                                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                        <p class="text-[8px] text-slate-400 font-black uppercase tracking-tighter">Word Count</p>
+                                        <p id="insightWords" class="text-xs font-bold text-slate-700">-</p>
+                                    </div>
+                                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                        <p class="text-[8px] text-slate-400 font-black uppercase tracking-tighter">Category</p>
+                                        <p id="insightType" class="text-xs font-bold text-slate-700 uppercase tracking-tight">-</p>
+                                    </div>
+                                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                        <p class="text-[8px] text-slate-400 font-black uppercase tracking-tighter">Extension</p>
+                                        <p id="insightExt" class="text-xs font-bold text-slate-700 uppercase tracking-tight">-</p>
+                                    </div>
+                                    <div class="col-span-2 p-3 bg-blue-50/50 rounded-xl border border-blue-100">
+                                        <p class="text-[8px] text-blue-400 font-black uppercase tracking-tighter">Processing Time</p>
+                                        <p id="insightTime" class="text-xs font-bold text-blue-600">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Results -->
+            <div class="lg:col-span-8 flex flex-col min-h-0">
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 h-full flex flex-col overflow-hidden">
+                    
+                    <!-- Fixed Output Header -->
+                    <div class="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+                        <div>
+                            <h2 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Step 2</h2>
+                            <p class="text-slate-800 font-bold text-sm">Review Your Result</p>
+                        </div>
+                        <div id="loader" class="hidden flex items-center gap-2 text-blue-600 text-[10px] font-black uppercase tracking-widest">
+                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            Analyzing...
+                        </div>
+                    </div>
+                    
+                    <!-- Scrollable content container -->
+                    <div class="flex-1 flex flex-col min-h-0 relative bg-slate-50">
+                        <div id="resultPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-300 z-10 p-12 text-center pointer-events-none">
+                            <div class="w-16 h-16 bg-white border border-slate-100 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+                                </svg>
+                            </div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Waiting for your file</p>
+                        </div>
+
+                        <div id="resultArea" class="hidden flex-1 flex flex-col min-h-0 animate-in">
+                            <div class="flex-1 min-h-0 overflow-hidden p-6">
+                                <div id="textContent" class="h-full w-full p-8 rounded-2xl whitespace-pre-wrap overflow-y-auto bg-slate-900 text-slate-300 font-mono text-sm shadow-inner selection:bg-blue-500/30"></div>
+                            </div>
+                            
+                            <div class="p-4 bg-white border-t border-slate-100 flex items-center justify-between shrink-0">
+                                <div class="flex items-center gap-2">
+                                    <button id="copyBtn" class="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center transition-all shadow-sm">
+                                        Copy
+                                    </button>
+                                    <button id="downloadBtn" class="bg-teal-600 hover:bg-teal-700 disabled:bg-slate-200 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center transition-all shadow-sm">
+                                        Download .txt
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span id="charCount" class="text-[9px] font-black text-slate-400 uppercase tracking-widest px-3 py-2 bg-slate-50 rounded-lg"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const openDisclaimer = document.getElementById('openDisclaimer');
+        const closeDisclaimer = document.getElementById('closeDisclaimer');
+        const disclaimerModal = document.getElementById('disclaimerModal');
+
+        openDisclaimer.onclick = () => disclaimerModal.classList.remove('hidden');
+        closeDisclaimer.onclick = () => disclaimerModal.classList.add('hidden');
+        disclaimerModal.onclick = (e) => { if(e.target === disclaimerModal) disclaimerModal.classList.add('hidden'); };
+    </script>
+
+    <!-- External JS -->
+    <script src="{{ url_for('static', path='js/app.js') }}"></script>
+    
+</body>
+</html>

@@ -1,0 +1,65 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
+body {
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+.drop-zone-active {
+  border-color: #3b82f6 !important;
+  background-color: #eff6ff !important;
+  transform: scale(1.01);
+}
+
+.toggle-card:has(input:checked) {
+  border-color: #3b82f6;
+  background-color: #f8faff;
+  box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.08);
+}
+
+.slider-input {
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 5px;
+  outline: none;
+}
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #3b82f6;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.animate-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
