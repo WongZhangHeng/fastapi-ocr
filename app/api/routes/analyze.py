@@ -8,8 +8,8 @@ from app.utils.file_validation import validate_file
 # Create router instance for grouping related endpoints
 router = APIRouter()
 
-# Maximum allowed upload file size (20MB)
-MAX_FILE_SIZE = 20 * 1024 * 1024
+# Maximum allowed upload file size (5MB)
+MAX_FILE_SIZE = 5 * 1024 * 1024
 
 @router.post("/analyze")
 async def analyze_file(
