@@ -1,6 +1,6 @@
 import os
 import secrets
-import pytesseract
+import config
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -9,7 +9,6 @@ from app.api.routes import analyze, pages, token
 
 
 app = FastAPI(title="FastAPI OCR System")
-pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
 
 # Security Token
